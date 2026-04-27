@@ -40,8 +40,7 @@ Tüm bu endpoint'ler sunucu adresi üzerinden /docs yoluna gidilerek (Swagger UI
 
 ## Değerlendirme Kanıtları (Test ve Ekran Görüntüleri)
 
-Hoca tarafından proje değerlendirmesi için istenen tüm kanıt dosyaları ve ekran görüntüleri proje dizini altındaki "resimler" klasörüne yüklenmiştir. Bu klasörde aşağıdaki adımların kanıtları bulunmaktadır:
-
+Proje değerlendirmesi için istenen tüm kanıt dosyaları ve ekran görüntüleri proje dizini altındaki  yüklenmiştir.
 - AWS Security Group ve bütçe takibi (Budget) ekran görüntüleri
 - Konteynerların çalıştığını gösteren "docker compose ps" çıktısı
 - FastAPI /docs arayüzünün ekran görüntüsü
