@@ -2,10 +2,10 @@
 
 Bu proje kapsamında, gerçek dünya gereksinimlerine uygun olarak AWS bulut ortamında güvenli, ölçeklenebilir ve otomatik yedekleme sistemine sahip bir web sunucusu altyapısı kurulmuştur.
 
-## Öğrenci Bilgileri
-Ad Soyad: Polat Ashyrov
-Öğrenci Numarası: 22181616xxx
-Üniversite/Bölüm: Gazi Üniversitesi Teknoloji Fakültesi Bilgisayar Mühendisliği
+
+##Ad Soyad: Polat Ashyrov
+##Öğrenci Numarası: 22181616xxx
+##Üniversite/Bölüm: Gazi Üniversitesi Teknoloji Fakültesi Bilgisayar Mühendisliği
 
 ## Sistem Mimarisi ve Kullanılan Teknolojiler
 - Bulut Sağlayıcı: Amazon Web Services (AWS EC2 - Free Tier)
