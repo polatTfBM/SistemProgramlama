@@ -1,0 +1,138 @@
+# Kurulum ve Komut  Raporu
+
+## 1. Bulut Sunucusunun (AWS EC2) Ayağa Kaldırılması
+Projenin altyapısını oluşturmak için Amazon Web Services (AWS) üzerinde aşağıdaki adımlar izlenerek sanal sunucu temin edilmiştir:
+
+- AWS Yönetim Konsoluna giriş yapılarak EC2 servisine geçildi.
+- "Launch Instance" (Sunucu Başlat) seçeneğine tıklanarak yeni bir kurulum başlatıldı.
+- İşletim sistemi olarak uzun süreli destek (LTS) sunan "Ubuntu Server 24.04 LTS" imajı seçildi.
+- Donanım tipi olarak AWS Free Tier (Ücretsiz Tier) kapsamındaki "t2.micro" (veya t3.micro) seçildi.
+- Sunucuya güvenli bağlantı kurabilmek için yeni bir Key Pair (Anahtar Çifti) oluşturuldu ve ".pem" uzantılı anahtar dosyası yerel bilgisayara indirildi.
+- Security Group (Güvenlik Grubu) ayarlarında Inbound (Gelen) kuralları projenin güvenlik isterlerine göre düzenlendi:
+  - SSH (Port 22) erişimi sadece bağlantı kurulacak yerel bilgisayarın IP adresine (My IP) izin verecek şekilde sınırlandırıldı.
+  - HTTP (Port 80) erişimi uygulamanın dış dünyaya hizmet verebilmesi için herkese (0.0.0.0/0) açıldı.
+  - Veritabanı portları (Örn: 5432) dışarıdan erişime tamamen kapalı bırakıldı.
+- Ayarlar tamamlandıktan sonra sunucu başlatıldı ve atanan Public IPv4 adresi uzaktan bağlantı için not edildi.
+
+  ## 2. Kendi Bilgisayarımızdan Sunucuya İlk Bağlantı
+AWS üzerinde ayağa kalkan sunucuya kendi bilgisayarımızın terminali üzerinden güvenli bir şekilde bağlanmak için şu adımlar uygulandı:
+
+Bilgisayardaki terminal (MacOS/Linux) veya komut istemcisi (Windows) açılarak indirilen .pem uzantılı anahtar dosyasının bulunduğu dizine gidildi ve sırasıyla aşağıdaki işlemler yapıldı:
+
+chmod 400 anahtar.pem
+#İndirilen anahtar dosyasının yetkileri, SSH protokolünün güvenlik gereksinimleri doğrultusunda sadece sahibinin okuyabileceği şekilde kısıtlandı.
+
+ssh -i anahtar.pem ubuntu@<SUNUCU_IP_ADRESI>
+#SSH komutu ve yetkileri ayarlanan anahtar dosyası kullanılarak, AWS'nin varsayılan "ubuntu" kullanıcısı üzerinden bulut sunucusuna ilk uzaktan bağlantı başarıyla gerçekleştirildi.
+
+  ## 3. Sunucu İçi Kurulum Adımları ve Komut Geçmişi
+Sunucuya bağlandıktan sonra projeyi istenen mimaride ayağa kaldırmak için sırasıyla aşağıdaki komutlar çalıştırılmıştır:
+
+sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+#Sunucuya root yetkisiyle doğrudan girişi engellemek ve güvenliği artırmak için kullanıldı.
+
+sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+#Sunucuya şifre yazarak bağlanmayı kapatıp, sadece elimizdeki özel SSH anahtarı (.pem) ile girilmesini sağlamak için kullanıldı.
+
+
+sudo systemctl restart ssh
+#Yaptığımız bu SSH güvenlik ayarlarının sistemde anında geçerli olması için SSH servisini yeniden başlatmak için kullanıldı.
+
+sudo hostnamectl set-hostname 22181616412.net
+#Sunucunun adını (hostname), projede istendiği gibi öğrenci numarasını içerecek şekilde değiştirmek için kullanıldı.
+
+echo 'export HISTTIMEFORMAT="%F %T "' >> ~/.bashrc
+#Terminalde yazılan komutların geçmişine (history) tarih ve saat bilgisini eklemek için kullanıldı.
+
+source ~/.bashrc
+#Geçmişe tarih ekleme ayarının sunucudan çıkış yapmadan hemen o an aktif olması için bash profilini yenilemekte kullanıldı.
+
+sudo apt install -y lynx gcc default-jre nmap ntfs-3g rkhunter clamav cockpit speedtest-cli docker.io docker-compose-v2 nftables
+#Proje gereksinimlerinde istenen komut satırı web tarayıcısı, derleyici, nmap, virüs tarayıcılar, docker ve güvenlik duvarı gibi temel paketlerin hepsini kurmak için kullanıldı.
+
+sudo apt install -y docker.io docker-compose-v2 nftables nmap
+#Bazı temel paketlerin eksik kalma ihtimaline karşı kurulum komutunu tekrar çalıştırarak sistemi garantiye almak için kullanıldı.
+
+docker --version
+#Docker aracının sisteme başarıyla kurulup kurulmadığını ve sürümünü kontrol etmek için kullanıldı.
+
+docker compose version
+#Docker Compose aracının kurulduğunu ve sürümünü doğrulamak için kullanıldı.
+
+nft list ruleset
+#Sistemdeki güncel güvenlik duvarı (firewall) kurallarını ekranda listelemek için kullanıldı.
+
+sudo apt update
+#Sistemin paket veri tabanını en güncel sürümlerle yenilemek için kullanıldı.
+
+sudo apt install -y lynx gcc default-jre nmap ntfs-3g rkhunter clamav cockpit speedtest-cli docker.io docker-compose-v2 nftables
+#Güncelleme sonrası sistemdeki tüm zorunlu paketlerin son hallerinin kurulu olduğundan emin olmak için kullanıldı. (Önce güncelleme yapmayı şidetle onererim yoksa hata verir)
+
+exit
+#Docker yetkilerinin geçerli olması için mevcut oturumu kapatıp sunucudan çıkış yapmak için kullanıldı.
+
+mkdir proje
+#Sistemde uygulamanın tüm dosyalarını bir arada tutacağımız ana proje klasörünü oluşturmak için kullanıldı.
+
+cd proje
+#Oluşturduğumuz bu ana proje klasörünün içine girmek için kullanıldı.
+
+mkdir app nginx backup
+#Projenin alt bileşenleri olan FastAPI kodları, web sunucusu ayarları ve yedek dosyaları için ayrı ayrı klasörler oluşturmak için kullanıldı.
+
+cd app
+#Backend uygulamasının dosyalarını hazırlamak üzere app klasörünün içine girmek için kullanıldı.
+
+nano main.py
+#FastAPI uygulamasının kodlarını yazacağımız ana Python dosyasını oluşturmak ve düzenlemek için kullanıldı.
+
+nano requirements.txt
+#Sistemin ihtiyaç duyduğu Python kütüphanelerinin listesini yazacağımız dosyayı oluşturmak için kullanıldı.
+
+nano Dockerfile
+#Uygulamanın Docker konteyneri haline gelmesini sağlayacak imaj oluşturma talimatlarını yazmak için kullanıldı.
+
+cd ..
+#App klasöründen çıkıp tekrar ana proje dizinine geri dönmek için kullanıldı.
+
+cd nginx/
+#Dış dünyadan gelen istekleri yönetecek proxy ayarlarını yapmak üzere nginx klasörüne girmek için kullanıldı.
+
+nano default.conf
+#Gelen istekleri içerideki FastAPI uygulamasına yönlendirecek Nginx ayar dosyasını oluşturmak için kullanıldı.
+
+cd ..
+#Nginx klasöründen çıkıp yeniden ana proje dizinine dönmek için kullanıldı.
+
+nano compose.yml
+#Veritabanı, backend ve web sunucusunun nasıl bir arada çalışacağını tanımladığımız Docker Compose dosyasını oluşturmak için kullanıldı.
+
+docker compose up -d
+#Tanımladığımız tüm konteyner mimarisini arka planda çalışacak şekilde ayağa kaldırmak için kullanıldı.
+
+sudo docker compose up -d
+#Yetki eksikliği ihtimaline karşı aynı komutu sudo yetkisiyle tekrar çalıştırarak sistemi başlatmak için kullanıldı.
+
+sudo apt install nftables -y
+#Sistemin güvenlik duvarını yönetmek için gerekli olan nftables paketini kurmak için kullanıldı.
+
+sudo nano /etc/nftables.conf
+#Güvenlik duvarı kurallarını yazacağımız ayar dosyasını açmak için kullanıldı.
+
+sudo systemctl enable --now nftables
+#Yazdığımız güvenlik duvarı kurallarının hemen aktif olmasını ve sunucu her yeniden başladığında otomatik çalışmasını sağlamak için kullanıldı.
+
+sudo nft list ruleset
+#Güvenlik duvarı kurallarının sisteme doğru bir şekilde işlenip işlenmediğini kontrol etmek için kullanıldı.
+
+nano /home/gazi/proje/backup/yedekle.sh
+#Veritabanının yedeğini alacak ve eski yedekleri otomatik silecek olan bash betiğini oluşturmak için kullanıldı.
+
+chmod +x /home/gazi/proje/backup/yedekle.sh
+#Oluşturduğumuz yedekleme dosyasına sistem tarafından çalıştırılabilmesi için gereken execute (çalıştırma) iznini vermek için kullanıldı.
+
+crontab -e
+#Hazırladığımız yedekleme dosyasının her gün belli bir saatte otomatik çalışması için zamanlanmış görev ayarlarını yapmak için kullanıldı.
+
+zcat /home/gazi/proje/backup/db_yedek_xxxx.sql.gz | docker exec -i bmt408_db psql -U kullanici -d proje_vt
+#Alınan sıkıştırılmış veritabanı yedeğini aktif konteynerin içine aktararak başarılı bir geri yükleme (restore) testi yapmak için kullanıldı.
